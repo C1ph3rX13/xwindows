@@ -124,10 +124,10 @@ The return value is a pseudo handle for the current thread.
 HANDLE GetCurrentThread();
 */
 
-func GetCurrentThread() (value uintptr, err error) {
+func GetCurrentThread() (handle windows.Handle, err error) {
 	r1, _, e1 := syscall.SyscallN(procGetCurrentThread.Addr())
-	value = r1
-	if value == 0 {
+	handle = windows.Handle(r1)
+	if handle == 0 {
 		err = errnoErr(e1)
 	}
 	return
@@ -171,10 +171,10 @@ HANDLE CreateThread(
 	);
 */
 
-func CreateThread(lpThreadAttributes uintptr, dwStackSize uintptr, lpStartAddress uintptr, lpParameter uintptr, dwCreationFlags uintptr, lpThreadId uintptr) (value uintptr, err error) {
+func CreateThread(lpThreadAttributes uintptr, dwStackSize uintptr, lpStartAddress uintptr, lpParameter uintptr, dwCreationFlags uintptr, lpThreadId uintptr) (handle windows.Handle, err error) {
 	r1, _, e1 := syscall.SyscallN(procCreateThread.Addr(), lpThreadAttributes, dwStackSize, lpStartAddress, lpParameter, dwCreationFlags, lpThreadId)
-	value = r1
-	if value == 0 {
+	handle = windows.Handle(r1)
+	if handle == 0 {
 		err = errnoErr(e1)
 	}
 	return
@@ -250,10 +250,10 @@ HANDLE CreateRemoteThreadEx(
 	);
 */
 
-func CreateRemoteThreadEx(hProcess windows.Handle, lpThreadAttributes uintptr, dwStackSize uintptr, lpStartAddress uintptr, lpParameter uintptr, dwCreationFlags uintptr, lpAttributeList uintptr, lpThreadId uintptr) (value uintptr, err error) {
+func CreateRemoteThreadEx(hProcess windows.Handle, lpThreadAttributes uintptr, dwStackSize uintptr, lpStartAddress uintptr, lpParameter uintptr, dwCreationFlags uintptr, lpAttributeList uintptr, lpThreadId uintptr) (handle windows.Handle, err error) {
 	r1, _, e1 := syscall.SyscallN(procCreateRemoteThreadEx.Addr(), uintptr(hProcess), lpThreadAttributes, dwStackSize, lpStartAddress, lpParameter, dwCreationFlags, lpAttributeList, lpThreadId)
-	value = r1
-	if value == 0 {
+	handle = windows.Handle(r1)
+	if handle == 0 {
 		err = errnoErr(e1)
 	}
 	return
