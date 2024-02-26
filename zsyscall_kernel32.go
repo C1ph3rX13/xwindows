@@ -250,8 +250,8 @@ HANDLE CreateRemoteThreadEx(
 	);
 */
 
-func CreateRemoteThreadEx(hProcess windows.Handle, lpThreadAttributes uintptr, dwStackSize uintptr, lpStartAddress uintptr, lpParameter uintptr, dwCreationFlags uintptr, lpAttributeList uintptr, lpThreadId uintptr) (handle windows.Handle, err error) {
-	r1, _, e1 := syscall.SyscallN(procCreateRemoteThreadEx.Addr(), uintptr(hProcess), lpThreadAttributes, dwStackSize, lpStartAddress, lpParameter, dwCreationFlags, lpAttributeList, lpThreadId)
+func CreateRemoteThreadEx(hProcess windows.Handle, lpThreadAttributes uintptr, dwStackSize uintptr, lpStartAddress uintptr, lpParameter uintptr, dwCreationFlags uint32, lpAttributeList uintptr, lpThreadId uintptr) (handle windows.Handle, err error) {
+	r1, _, e1 := syscall.SyscallN(procCreateRemoteThreadEx.Addr(), uintptr(hProcess), lpThreadAttributes, dwStackSize, lpStartAddress, lpParameter, uintptr(dwCreationFlags), lpAttributeList, lpThreadId)
 	handle = windows.Handle(r1)
 	if handle == 0 {
 		err = errnoErr(e1)
@@ -295,8 +295,8 @@ HANDLE HeapCreate(
 Link: https://learn.microsoft.com/en-us/windows/win32/api/heapapi/nf-heapapi-heapcreate
 */
 
-func HeapCreate(flOptions uintptr, dwInitialSize uintptr, dwMaximumSize uintptr) (value uintptr, err error) {
-	r1, _, e1 := syscall.SyscallN(procHeapCreate.Addr(), flOptions, dwInitialSize, dwMaximumSize)
+func HeapCreate(flOptions uint32, dwInitialSize uintptr, dwMaximumSize uintptr) (value uintptr, err error) {
+	r1, _, e1 := syscall.SyscallN(procHeapCreate.Addr(), uintptr(flOptions), dwInitialSize, dwMaximumSize)
 	value = r1
 	if value == 0 {
 		err = errnoErr(e1)
@@ -322,8 +322,8 @@ DECLSPEC_ALLOCATOR LPVOID HeapAlloc(
 Link: https://learn.microsoft.com/en-us/windows/win32/api/heapapi/nf-heapapi-heapalloc
 */
 
-func HeapAlloc(hHeap windows.Handle, dwFlags uintptr, dwBytes uintptr) (value uintptr, err error) {
-	r1, _, e1 := syscall.SyscallN(procHeapCreate.Addr(), uintptr(hHeap), dwFlags, dwBytes)
+func HeapAlloc(hHeap windows.Handle, dwFlags uint32, dwBytes uintptr) (value uintptr, err error) {
+	r1, _, e1 := syscall.SyscallN(procHeapCreate.Addr(), uintptr(hHeap), uintptr(dwFlags), dwBytes)
 	value = r1
 	if value == 0 {
 		err = errnoErr(e1)
@@ -412,8 +412,8 @@ ERROR_INVALID_FLAGS. The values supplied for flags were not valid.
 ERROR_INVALID_PARAMETER. Any of the parameter values was invalid.
 */
 
-func EnumSystemLocalesW(lpLocaleEnumProc uintptr, dwFlags uintptr) (value uintptr, err error) {
-	r1, _, e1 := syscall.SyscallN(procEnumSystemLocalesW.Addr(), lpLocaleEnumProc, dwFlags)
+func EnumSystemLocalesW(lpLocaleEnumProc uintptr, dwFlags uint32) (value uintptr, err error) {
+	r1, _, e1 := syscall.SyscallN(procEnumSystemLocalesW.Addr(), lpLocaleEnumProc, uintptr(dwFlags))
 	value = r1
 	if value == 0 {
 		err = errnoErr(e1)
@@ -440,8 +440,8 @@ ERROR_INVALID_PARAMETER. Any of the parameter values was invalid.
 Link:https://learn.microsoft.com/en-us/windows/win32/api/winnls/nf-winnls-enumsystemlocalesex
 */
 
-func EnumSystemLocalesEx(lpLocaleEnumProcEx uintptr, dwFlags uintptr, lParam uintptr, lpReserved uintptr) (value uintptr, err error) {
-	r1, _, e1 := syscall.SyscallN(procEnumSystemLocalesEx.Addr(), lpLocaleEnumProcEx, dwFlags, lParam, lpReserved)
+func EnumSystemLocalesEx(lpLocaleEnumProcEx uintptr, dwFlags uint32, lParam uintptr, lpReserved uintptr) (value uintptr, err error) {
+	r1, _, e1 := syscall.SyscallN(procEnumSystemLocalesEx.Addr(), lpLocaleEnumProcEx, uintptr(dwFlags), lParam, lpReserved)
 	value = r1
 	if value == 0 {
 		err = errnoErr(e1)
@@ -464,8 +464,8 @@ If the function fails, the return value is zero. To get extended error informati
 Link: https://learn.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-terminatethread
 */
 
-func TerminateThread(hThread uintptr, dwExitCode uintptr) (value uintptr, err error) {
-	r1, _, e1 := syscall.SyscallN(procTerminateThread.Addr(), hThread, dwExitCode)
+func TerminateThread(hThread uintptr, dwExitCode uint32) (value uintptr, err error) {
+	r1, _, e1 := syscall.SyscallN(procTerminateThread.Addr(), hThread, uintptr(dwExitCode))
 	value = r1
 	if value == 0 {
 		err = errnoErr(e1)

@@ -82,7 +82,6 @@ func EtwpCreateEtwThread(lpStartAddress uintptr, lpParameter uintptr) (value uin
 /*
 The RtlEthernetStringToAddress function converts a string representation of an Ethernet MAC address to a binary format of the Ethernet address.
 
-
 NTSYSAPI NTSTATUS RtlEthernetStringToAddressA(
 	[in]  PCSTR    S,
 	[out] PCSTR    *Terminator,
@@ -283,6 +282,27 @@ Link: https://www.geoffchappell.com/studies/windows/win32/ntdll/api/etw/evntapi/
 
 func EtwEventWriteEx(regHandle windows.Handle, eventDescriptor uintptr, filter uintptr, flags uintptr, activityId uintptr, relatedActivityId uintptr, userDataCount uintptr, userData uintptr) (value uintptr, err error) {
 	r1, _, e1 := syscall.SyscallN(procEtwEventWriteEx.Addr(), uintptr(regHandle), eventDescriptor, filter, flags, activityId, relatedActivityId, userDataCount, userData)
+	value = r1
+	if value == 0 {
+		err = errnoErr(e1)
+	}
+	return
+}
+
+/*
+NTSYSAPI
+ULONG
+NTAPI
+EtwEventWriteString(
+	_In_ REGHANDLE RegHandle,
+	_In_ UCHAR Level,
+	_In_ ULONGLONG Keyword,
+	_In_ PCWSTR String
+	);
+*/
+
+func EtwEventWriteString(regHandle windows.Handle, level uintptr, keyword uintptr, string uintptr) (value uintptr, err error) {
+	r1, _, e1 := syscall.SyscallN(procEtwEventWriteString.Addr(), uintptr(regHandle), level, keyword, string)
 	value = r1
 	if value == 0 {
 		err = errnoErr(e1)
