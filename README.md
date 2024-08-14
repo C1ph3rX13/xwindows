@@ -14,13 +14,19 @@ This package makes selected `DLLs` functions directly available in Go programs. 
 
 ## What’s Changed
 
-### 2024.03.01
+### 2024.8.14
+
+1. 新增`mkwinsyscall`工具实现API代码生成 - 待完善
+2. 新增`actived, advapi, winmm`等DLL
+3. 修复多个API参数类型不对应
+
+### 2024.3.1
 
 1. 修复多个函数的Bug
 2. 添加文档
 3. 新增多个未公开的函数
 
-### 2024.02.26
+### 2024.2.26
 
 [variant](https://github.com/C1ph3rX13/variant) 项目衍生库
 

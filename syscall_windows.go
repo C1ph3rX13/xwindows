@@ -2,9 +2,12 @@ package xwindows
 
 import (
 	"syscall"
+	"unsafe"
 
 	"golang.org/x/sys/windows"
 )
+
+var _ unsafe.Pointer
 
 // Do the interface allocations only once for common
 // Errno values.
@@ -26,6 +29,9 @@ func errnoErr(e syscall.Errno) error {
 	case errnoERROR_IO_PENDING:
 		return errERROR_IO_PENDING
 	}
+	// TODO: add more here, after collecting data on the common
+	// error values see on Windows. (perhaps when running
+	// all.bat?)
 	return e
 }
 
@@ -36,38 +42,52 @@ var (
 	modactiveds = windows.NewLazySystemDLL("Activeds.dll")
 	modpsapi    = windows.NewLazySystemDLL("psapi.dll")
 	moddbghelp  = windows.NewLazySystemDLL("dbghelp.dll")
-	modadvapi32 = windows.NewLazySystemDLL("advapi32.dll")
+	modadvapi32 = windows.NewLazySystemDLL("Advapi32.dll")
+	moduser32   = windows.NewLazySystemDLL("user32.dll")
+	modwinmm    = windows.NewLazySystemDLL("Winmm.dll")
 
 	// kernel32
-	procVirtualAlloc             = modkernel32.NewProc("VirtualAlloc")
-	procVirtualProtect           = modkernel32.NewProc("VirtualProtect")
-	procVirtualProtectEx         = modkernel32.NewProc("VirtualProtectEx")
-	procVirtualAllocEx           = modkernel32.NewProc("VirtualAllocEx")
-	procCreateRemoteThreadEx     = modkernel32.NewProc("CreateRemoteThreadEx")
-	procConvertThreadToFiber     = modkernel32.NewProc("ConvertThreadToFiber")
-	procCreateFiber              = modkernel32.NewProc("CreateFiber")
-	procSwitchToFiber            = modkernel32.NewProc("SwitchToFiber")
-	procGetCurrentThread         = modkernel32.NewProc("GetCurrentThread")
-	procWaitForSingleObject      = modkernel32.NewProc("WaitForSingleObject")
-	procCreateThread             = modkernel32.NewProc("CreateThread")
-	procOpenProcess              = modkernel32.NewProc("OpenProcess")
-	procWriteProcessMemory       = modkernel32.NewProc("WriteProcessMemory")
-	procCloseHandle              = modkernel32.NewProc("CloseHandle")
-	procHeapCreate               = modkernel32.NewProc("HeapCreate")
-	procGetCurrentProcess        = modkernel32.NewProc("GetCurrentProcess")
-	procRtlMoveMemory            = modkernel32.NewProc("RtlMoveMemory")
-	procEnumSystemLocalesW       = modkernel32.NewProc("EnumSystemLocalesW")
-	procEnumSystemLocalesEx      = modkernel32.NewProc("EnumSystemLocalesEx")
-	procTerminateThread          = modkernel32.NewProc("TerminateThread")
-	procReadProcessMemory        = modkernel32.NewProc("ReadProcessMemory")
-	procCreateToolhelp32Snapshot = modkernel32.NewProc("CreateToolhelp32Snapshot")
-	procThread32First            = modkernel32.NewProc("Thread32First")
-	procOpenThread               = modkernel32.NewProc("OpenThread")
-	procQueueUserAPC             = modkernel32.NewProc("QueueUserAPC")
-	procCreateRemoteThread       = modkernel32.NewProc("CreateRemoteThread")
+	procVirtualAlloc               = modkernel32.NewProc("VirtualAlloc")
+	procVirtualProtect             = modkernel32.NewProc("VirtualProtect")
+	procVirtualProtectEx           = modkernel32.NewProc("VirtualProtectEx")
+	procVirtualAllocEx             = modkernel32.NewProc("VirtualAllocEx")
+	procCreateRemoteThreadEx       = modkernel32.NewProc("CreateRemoteThreadEx")
+	procConvertThreadToFiber       = modkernel32.NewProc("ConvertThreadToFiber")
+	procCreateFiber                = modkernel32.NewProc("CreateFiber")
+	procSwitchToFiber              = modkernel32.NewProc("SwitchToFiber")
+	procGetCurrentThread           = modkernel32.NewProc("GetCurrentThread")
+	procWaitForSingleObject        = modkernel32.NewProc("WaitForSingleObject")
+	procCreateThread               = modkernel32.NewProc("CreateThread")
+	procOpenProcess                = modkernel32.NewProc("OpenProcess")
+	procWriteProcessMemory         = modkernel32.NewProc("WriteProcessMemory")
+	procCloseHandle                = modkernel32.NewProc("CloseHandle")
+	procHeapCreate                 = modkernel32.NewProc("HeapCreate")
+	procGetCurrentProcess          = modkernel32.NewProc("GetCurrentProcess")
+	procRtlMoveMemory              = modkernel32.NewProc("RtlMoveMemory")
+	procEnumSystemLocalesW         = modkernel32.NewProc("EnumSystemLocalesW")
+	procEnumSystemLocalesEx        = modkernel32.NewProc("EnumSystemLocalesEx")
+	procTerminateThread            = modkernel32.NewProc("TerminateThread")
+	procReadProcessMemory          = modkernel32.NewProc("ReadProcessMemory")
+	procCreateToolhelp32Snapshot   = modkernel32.NewProc("CreateToolhelp32Snapshot")
+	procThread32First              = modkernel32.NewProc("Thread32First")
+	procOpenThread                 = modkernel32.NewProc("OpenThread")
+	procQueueUserAPC               = modkernel32.NewProc("QueueUserAPC")
+	procCreateRemoteThread         = modkernel32.NewProc("CreateRemoteThread")
+	procLoadLibraryA               = modkernel32.NewProc("LoadLibraryA")
+	procResumeThread               = modkernel32.NewProc("ResumeThread")
+	procGetThreadContext           = modkernel32.NewProc("GetThreadContext")
+	procSetThreadContext           = modkernel32.NewProc("SetThreadContext")
+	procCreateProcessA             = modkernel32.NewProc("CreateProcessA")
+	procSuspendThread              = modkernel32.NewProc("SuspendThread")
+	procLoadLibraryW               = modkernel32.NewProc("LoadLibraryW")
+	procBeep                       = modkernel32.NewProc("Beep")
+	procSetFileInformationByHandle = modkernel32.NewProc("SetFileInformationByHandle")
+	procGetProcAddress             = modkernel32.NewProc("GetProcAddress")
+	procGetConsoleWindow           = modkernel32.NewProc("GetConsoleWindow")
 	// SandBox
 	procGetTickCount                       = modkernel32.NewProc("GetTickCount")
 	procGetPhysicallyInstalledSystemMemory = modkernel32.NewProc("GetPhysicallyInstalledSystemMemory")
+	procSleepEx                            = modkernel32.NewProc("SleepEx")
 
 	// ntdll
 	procRtlCopyMemory               = modntdll.NewProc("RtlCopyMemory")
@@ -87,18 +107,30 @@ var (
 	procEtwEventWriteTransfer       = modntdll.NewProc("EtwEventWriteTransfer")
 	procNtQueryInformationThread    = modntdll.NewProc("NtQueryInformationThread")
 	procNtCreateSection             = modntdll.NewProc("NtCreateSection")
+	procNtUnmapViewOfSection        = modntdll.NewProc("NtUnmapViewOfSection")
+	procNtQueryInformationProcess   = modntdll.NewProc("NtQueryInformationProcess")
+	procNtDelayExecution            = modntdll.NewProc("NtDelayExecution")
 
 	// Rpcrt4
 	procUuidFromStringA = modrpcrt4.NewProc("UuidFromStringA")
 
 	// Activeds
-	procAllocADsMem          = modactiveds.NewProc("AllocADsMem")
-	procFreeADsMem           = modadvapi32.NewProc("FreeADsMem")
-	procIQueryTagInformation = modadvapi32.NewProc("I_QueryTagInformation")
+	procAllocADsMem = modactiveds.NewProc("AllocADsMem")
+	procFreeADsMem  = modactiveds.NewProc("FreeADsMem")
 
 	// psapi
 	procEnumPageFilesW = modpsapi.NewProc("EnumPageFilesW")
 
 	// dbghelp
 	procEnumerateLoadedModules = moddbghelp.NewProc("EnumerateLoadedModules")
+
+	// Advapi32
+	procIQueryTagInformation = modadvapi32.NewProc("I_QueryTagInformation")
+	procRegDeleteTreeA       = modadvapi32.NewProc("RegDeleteTreeA")
+
+	// user32.dll
+	procShowWindow = moduser32.NewProc("ShowWindow")
+
+	// Winmm.dll
+	procTimeGetTime = modwinmm.NewProc("timeGetTime")
 )

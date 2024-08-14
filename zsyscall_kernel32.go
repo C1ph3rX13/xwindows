@@ -188,7 +188,7 @@ func CreateFiber(dwStackSize uintptr, lpStartAddress uintptr, lpParameter uintpt
 SwitchToFiber
 Schedules a fiber. The function must be called on a fiber.
 
-void SwitchToFiber(
+Void SwitchToFiber(
 
 	[in] LPVOID lpFiber
 	);
@@ -275,16 +275,18 @@ HANDLE CreateThread(
 如果函数成功，则返回值是新线程的句柄
 如果函数失败，则返回值为 NULL
 
+type pCreateThread func(lpThreadAttributes *windows.SecurityAttributes, dwStackSize uintptr, lpStartAddress uintptr, lpParameter uintptr, dwCreationFlags uint32, lpThreadId *uint32) uintptr
+
 Link: https://learn.microsoft.com/zh-cn/windows/win32/api/processthreadsapi/nf-processthreadsapi-createthread
 */
-func CreateThread(lpThreadAttributes uintptr, dwStackSize uintptr, lpStartAddress uintptr, lpParameter uintptr, dwCreationFlags uintptr, lpThreadId uintptr) (handle windows.Handle, err error) {
+func CreateThread(lpThreadAttributes uintptr, dwStackSize uintptr, lpStartAddress uintptr, lpParameter uintptr, dwCreationFlags uint32, lpThreadId uintptr) (handle windows.Handle, err error) {
 	r1, _, e1 := syscall.SyscallN(
 		procCreateThread.Addr(),
-		lpThreadAttributes,
+		lpThreadAttributes, // 指向 SECURITY_ATTRIBUTES 结构的指针，该结构确定是否可由子进程继承返回的句柄
 		dwStackSize,
 		lpStartAddress,
 		lpParameter,
-		dwCreationFlags,
+		uintptr(dwCreationFlags),
 		lpThreadId,
 	)
 	handle = windows.Handle(r1)
@@ -882,6 +884,393 @@ func CreateRemoteThread(hProcess windows.Handle, lpThreadAttributes uintptr, dwS
 	)
 	value = r1
 	if value == 0 {
+		err = errnoErr(e1)
+	}
+	return
+}
+
+/*
+LoadLibraryA
+将指定的模块加载到调用进程的地址空间中。 指定的模块可能会导致加载其他模块。
+有关其他加载选项，请使用 LoadLibraryEx 函数。
+
+HMODULE LoadLibraryA(
+
+	  [in] LPCSTR lpLibFileName // 模块的名称。 可以是库模块 (.dll 文件) ，也可以是可执行模块 (.exe 文件)
+	);
+
+返回值
+如果函数成功，则返回值是模块的句柄。
+如果函数失败，则返回值为 NULL。 要获得更多的错误信息，请调用 GetLastError。
+
+Link: https://learn.microsoft.com/zh-cn/windows/win32/api/libloaderapi/nf-libloaderapi-loadlibrarya
+*/
+func LoadLibraryA(lpLibFileName string) (handle windows.Handle, err error) {
+	r1, _, e1 := syscall.SyscallN(
+		procLoadLibraryA.Addr(),
+		uintptr(unsafe.Pointer(windows.StringToUTF16Ptr(lpLibFileName))), // type: *uint16
+	)
+	handle = windows.Handle(r1)
+	if r1 == 0 {
+		err = errnoErr(e1)
+	}
+	return
+}
+
+/*
+GetThreadContext
+检索指定线程的上下文。
+64 位应用程序可以使用 Wow64GetThreadContext 检索 WOW64 线程的上下文。
+
+BOOL GetThreadContext(
+
+	[in]      HANDLE    hThread,  // 要检索其上下文的线程的句柄
+	[in, out] LPCONTEXT lpContext // 指向 CONTEXT 结构的指针 (，例如接收指定线程的适当上下文 的 ARM64_NT_CONTEXT)
+	);
+
+如果该函数成功，则返回值为非零值。
+如果函数失败，则返回值为零。
+
+Link: https://learn.microsoft.com/zh-cn/windows/win32/api/processthreadsapi/nf-processthreadsapi-getthreadcontext
+*/
+func GetThreadContext(hThread windows.Handle, lpContext *CONTEXT) (value uintptr, err error) {
+	r1, _, e1 := syscall.SyscallN(
+		procGetThreadContext.Addr(),
+		uintptr(hThread),
+		uintptr(unsafe.Pointer(lpContext)),
+	)
+	value = r1
+	if value == 0 {
+		err = errnoErr(e1)
+	}
+	return
+}
+
+/*
+ResumeThread
+递减线程的挂起计数。 当暂停计数减为零时，将恢复线程的执行。
+
+DWORD ResumeThread(
+
+	[in] HANDLE hThread // 要重启的线程的句柄
+	);
+
+如果函数成功，则返回值是线程的上一个挂起计数。
+如果函数失败，则返回值 (DWORD) -1。
+
+Link: https://learn.microsoft.com/zh-cn/windows/win32/api/processthreadsapi/nf-processthreadsapi-resumethread
+*/
+func ResumeThread(hThread windows.Handle) (value uintptr, err error) {
+	r1, _, e1 := syscall.SyscallN(
+		procResumeThread.Addr(),
+		uintptr(hThread),
+	)
+	value = r1
+	if value == 0xFFFFFFFF {
+		err = errnoErr(e1)
+	}
+	return
+}
+
+/*
+SetThreadContext
+设置指定的线程的上下文。
+64 位应用程序可以使用 Wow64SetThreadContext 函数设置 WOW64 线程的上下文。
+
+BOOL SetThreadContext(
+
+	[in] HANDLE        hThread, 	// 要设置其上下文的线程的句柄
+	[in] const CONTEXT *lpContext   // 指向 CONTEXT 结构的指针，该结构包含要设置在指定线程中的上下文
+	);
+
+如果设置了上下文，则返回值为非零值。
+如果函数失败，则返回值为零。
+
+CONTEXT 结构: https://learn.microsoft.com/zh-cn/windows/win32/api/winnt/ns-winnt-arm64_nt_context
+Link: https://learn.microsoft.com/zh-cn/windows/win32/api/processthreadsapi/nf-processthreadsapi-setthreadcontext
+*/
+func SetThreadContext(hThread windows.Handle, lpContext *CONTEXT) (value uintptr, err error) {
+	r1, _, e1 := syscall.SyscallN(
+		procSetThreadContext.Addr(),
+		uintptr(hThread),
+		uintptr(unsafe.Pointer(lpContext)),
+	)
+	value = r1
+	if value == 0 {
+		err = errnoErr(e1)
+	}
+	return
+}
+
+/*
+CreateProcessA
+创建新进程及其主线程。 新进程在调用进程的安全上下文中运行。
+如果调用进程正在模拟其他用户，则新进程将令牌用于调用进程，而不是模拟令牌。 若要在模拟令牌表示的用户的安全上下文中运行新进程，请使用 CreateProcessAsUser 或 CreateProcessWithLogonW 函数。
+
+BOOL CreateProcessA(
+
+	[in, optional]      LPCSTR                lpApplicationName,    // 要执行的模块的名称
+	[in, out, optional] LPSTR                 lpCommandLine,        // 要执行的命令行
+	[in, optional]      LPSECURITY_ATTRIBUTES lpProcessAttributes,  // 指向 SECURITY_ATTRIBUTES 结构的指针
+	[in, optional]      LPSECURITY_ATTRIBUTES lpThreadAttributes,   // 指向 SECURITY_ATTRIBUTES 结构的指针
+	[in]                BOOL                  bInheritHandles,      // 参数为 TRUE，则调用进程中的每个可继承句柄都由新进程继承
+	[in]                DWORD                 dwCreationFlags,      // 控制优先级类和进程的创建的标志
+	[in, optional]      LPVOID                lpEnvironment,        // 指向新进程的环境块的指针
+	[in, optional]      LPCSTR                lpCurrentDirectory,   // 进程当前目录的完整路径
+	[in]                LPSTARTUPINFOA        lpStartupInfo,		// 指向 STARTUPINFO 或 STARTUPINFOEX 结构的指针
+	[out]               LPPROCESS_INFORMATION lpProcessInformation  // 指向接收有关新进程的标识信息的 PROCESS_INFORMATION 结构的指针
+	);
+
+Link: https://learn.microsoft.com/zh-cn/windows/win32/api/processthreadsapi/nf-processthreadsapi-createprocessa
+*/
+func CreateProcessA(appName *uint16, commandLine *uint16, procSecurity *windows.SecurityAttributes, threadSecurity *windows.SecurityAttributes, inheritHandles bool, creationFlags uint32, env *uint16, currentDir *uint16, startupInfo *windows.StartupInfo, outProcInfo *windows.ProcessInformation) (err error) {
+	var _p0 uint32
+	if inheritHandles {
+		_p0 = 1
+	}
+	r1, _, e1 := syscall.SyscallN(
+		procCreateProcessA.Addr(),
+		uintptr(unsafe.Pointer(appName)),
+		uintptr(unsafe.Pointer(commandLine)),
+		uintptr(unsafe.Pointer(procSecurity)),
+		uintptr(unsafe.Pointer(threadSecurity)),
+		uintptr(_p0),
+		uintptr(creationFlags),
+		uintptr(unsafe.Pointer(env)),
+		uintptr(unsafe.Pointer(currentDir)),
+		uintptr(unsafe.Pointer(startupInfo)),
+		uintptr(unsafe.Pointer(outProcInfo)),
+	)
+	if r1 == 0 {
+		err = errnoErr(e1)
+	}
+	return
+}
+
+/*
+SuspendThread
+挂起指定的线程。
+64 位应用程序可以使用 Wow64SuspendThread 函数挂起 WOW64 线程。
+
+DWORD SuspendThread(
+
+	[in] HANDLE hThread // 要挂起的线程的句柄
+	);
+
+如果函数成功，则返回值为线程的上一个挂起计数;否则为 (DWORD) -1。
+
+Link: https://learn.microsoft.com/zh-cn/windows/win32/api/processthreadsapi/nf-processthreadsapi-suspendthread
+*/
+func SuspendThread(hThread windows.Handle) (value uintptr, err error) {
+	r1, _, e1 := syscall.SyscallN(
+		procSuspendThread.Addr(),
+		uintptr(hThread),
+	)
+	value = r1
+	if value == 0xFFFFFFFF {
+		err = errnoErr(e1)
+	}
+	return
+}
+
+/*
+LoadLibraryW
+将指定的模块加载到调用进程的地址空间中。 指定的模块可能会导致加载其他模块。
+
+HMODULE LoadLibraryW(
+
+	[in] LPCWSTR lpLibFileName
+	);
+
+如果函数成功，则返回值是模块的句柄。
+如果函数失败，则返回值为 NULL。
+
+Links: https://learn.microsoft.com/zh-cn/windows/win32/api/libloaderapi/nf-libloaderapi-loadlibraryw
+*/
+func LoadLibraryW(libName string) (handle windows.Handle, err error) {
+	var _p0 *uint16
+	_p0, err = windows.UTF16PtrFromString(libName)
+	if err != nil {
+		return
+	}
+	return _LoadLibrary(_p0)
+}
+
+func _LoadLibrary(libName *uint16) (handle windows.Handle, err error) {
+	r0, _, e1 := syscall.SyscallN(
+		procLoadLibraryW.Addr(),
+		uintptr(unsafe.Pointer(libName)),
+	)
+	handle = windows.Handle(r0)
+	if handle == 0 {
+		err = errnoErr(e1)
+	}
+	return
+}
+
+/*
+Beep
+在扬声器上生成简单的音调。 函数是同步的;它执行可警报等待，在声音完成之前不会将控制权返回到其调用方。
+
+BOOL Beep(
+
+	[in] DWORD dwFreq,		// 声音的频率，以Hz为单位。 此参数的范围必须介于 37 到 32,767 (0x25 到 0x7FFF) 。
+	[in] DWORD dwDuration   // 声音的持续时间（以毫秒为单位）。
+	);
+
+如果该函数成功，则返回值为非零值。
+如果函数失败，则返回值为零。
+
+Links: https://learn.microsoft.com/zh-cn/windows/win32/api/utilapiset/nf-utilapiset-beep
+*/
+func Beep(dwFreq uint32, dwDuration uint32) (value uintptr, err error) {
+	r1, _, e1 := syscall.SyscallN(
+		procBeep.Addr(),
+		uintptr(dwFreq),
+		uintptr(dwDuration),
+	)
+	value = r1
+	if value == 0 {
+		err = errnoErr(e1)
+	}
+	return
+}
+
+/*
+SetFileInformationByHandle
+设置指定文件的文件信息。
+若要使用文件句柄检索文件信息，请参阅 GetFileInformationByHandle 或 GetFileInformationByHandleEx。
+
+BOOL SetFileInformationByHandle(
+
+	[in] HANDLE                    hFile, // 要更改其信息的文件的句柄
+	[in] FILE_INFO_BY_HANDLE_CLASS FileInformationClass, // 一个FILE_INFO_BY_HANDLE_CLASS枚举值，该值指定要更改的信息的类型
+	[in] LPVOID                    lpFileInformation, // 指向缓冲区的指针，该缓冲区包含指定文件信息类要更改的信息
+	[in] DWORD                     dwBufferSize // lpFileInformation 的大小（以字节为单位）
+	);
+
+如果成功，则返回非零值，否则返回零。
+要获得更多的错误信息，请调用 GetLastError。
+
+Link: https://learn.microsoft.com/zh-cn/windows/win32/api/fileapi/nf-fileapi-setfileinformationbyhandle
+*/
+func SetFileInformationByHandle(handle windows.Handle, class uint32, inBuffer *byte, inBufferLen uint32) (err error) {
+	r1, _, e1 := syscall.SyscallN(
+		procSetFileInformationByHandle.Addr(),
+		uintptr(handle),
+		uintptr(class),
+		uintptr(unsafe.Pointer(inBuffer)),
+		uintptr(inBufferLen),
+	)
+	if r1 == 0 {
+		err = errnoErr(e1)
+	}
+	return
+}
+
+/*
+GetProcAddress
+
+FARPROC GetProcAddress(
+
+	[in] HMODULE hModule,
+	[in] LPCSTR  lpProcName
+	);
+
+[in] hModule
+包含函数或变量的 DLL 模块的句柄。 LoadLibrary、LoadLibraryEx、LoadPackagedLibrary 或 GetModuleHandle 函数返回此句柄。
+GetProcAddress 函数不会从使用 LOAD_LIBRARY_AS_DATAFILE 标志加载的模块中检索地址。 有关详细信息，请参阅 LoadLibraryEx。
+
+[in] lpProcName
+函数或变量名称，或函数的序号值。 如果此参数是序号值，则它必须在低序位字中；高序位字必须为零。
+
+Return
+如果函数成功，则返回值是导出的函数或变量的地址。
+如果函数失败，则返回值为 NULL。 要获得更多的错误信息，请调用 GetLastError。
+
+Link: https://learn.microsoft.com/zh-cn/windows/win32/api/libloaderapi/nf-libloaderapi-getprocaddress
+*/
+func GetProcAddress(module windows.Handle, procName string) (proc uintptr, err error) {
+	var _p0 *byte
+	_p0, err = windows.BytePtrFromString(procName)
+	if err != nil {
+		return
+	}
+	return _GetProcAddress(module, _p0)
+}
+
+func _GetProcAddress(module windows.Handle, procName *byte) (proc uintptr, err error) {
+	r0, _, e1 := syscall.SyscallN(
+		procGetProcAddress.Addr(),
+		uintptr(module),
+		uintptr(unsafe.Pointer(procName)),
+		0,
+	)
+	proc = r0
+	if proc == 0 {
+		err = errnoErr(e1)
+	}
+	return
+}
+
+func GetLoadLibraryAAddr() (uintptr, error) {
+	ptr, err := windows.GetProcAddress(
+		windows.Handle(procLoadLibraryA.Addr()),
+		"LoadLibraryA",
+	)
+	err = syscall.GetLastError()
+	return ptr, err
+}
+
+/*
+GetConsoleWindow
+检索与调用进程相关联的控制台使用的窗口句柄
+
+HWND WINAPI GetConsoleWindow(void);
+
+返回值
+返回值是与调用进程相关联的控制台所使用的窗口句柄，如果没有此类关联控制台，则返回值为 NULL。
+
+Link: https://learn.microsoft.com/zh-cn/windows/console/getconsolewindow
+*/
+func GetConsoleWindow() (proc uintptr, err error) {
+	r1, _, e1 := syscall.SyscallN(procGetConsoleWindow.Addr())
+	proc = r1
+	if proc == 0 {
+		err = errnoErr(e1)
+	}
+	return
+}
+
+/*
+SleepEx
+挂起当前线程，直到满足指定的条件。 发生以下情况之一时，将继续执行：
+
+	调用 I/O 完成回调函数。
+	异步过程调用 (APC) 排队到线程。
+	超时间隔已过。
+
+DWORD SleepEx(
+
+	[in] DWORD dwMilliseconds,   // 暂停执行的时间间隔（以毫秒为单位）
+	[in] BOOL  bAlertable        // 如果此参数为 FALSE，则函数在超时期限过后才会返回
+
+);
+
+返回值
+如果指定的时间间隔过期，则返回值为零。
+
+如果函数由于一个或多个 I/O 完成回调函数而返回，则返回值WAIT_IO_COMPLETION。 仅当 bAlertable 为 TRUE，并且调用 SleepEx 函数的线程与调用扩展 I/O 函数的线程相同时，才会发生这种情况。
+
+Link: https://learn.microsoft.com/zh-cn/windows/win32/api/synchapi/nf-synchapi-sleepex
+*/
+func SleepEx(dwMilliseconds uint32, bAlertable bool) (value uintptr, err error) {
+	r1, _, e1 := syscall.SyscallN(
+		procSleepEx.Addr(),
+		uintptr(dwMilliseconds),
+		uintptr(unsafe.Pointer(&bAlertable)),
+	)
+	if r1 != 0 {
 		err = errnoErr(e1)
 	}
 	return

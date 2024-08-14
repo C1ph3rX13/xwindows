@@ -547,3 +547,64 @@ func NtCreateSection(sectionHandle *windows.Handle, desiredAccess uint32, object
 	}
 	return
 }
+
+/*
+NtQueryInformationProcess
+检索有关指定进程的信息
+
+__kernel_entry NTSTATUS NtQueryInformationProcess(
+
+	  [in]            HANDLE           ProcessHandle,             // 要检索信息的进程句柄
+	  [in]            PROCESSINFOCLASS ProcessInformationClass,   // 要检索的进程信息的类型
+	  [out]           PVOID            ProcessInformation,        // 指向由调用应用程序提供的缓冲区的指针，函数将请求的信息写入其中
+	  [in]            ULONG            ProcessInformationLength,
+	  [out, optional] PULONG           ReturnLength
+	);
+
+返回值
+函数返回 NTSTATUS 成功或错误代码。
+NTSTATUS 错误代码的形式和意义列在 DDK 中提供的 Ntstatus.h 头文件中
+
+Link: https://learn.microsoft.com/zh-cn/windows/win32/api/winternl/nf-winternl-ntqueryinformationprocess
+*/
+func NtQueryInformationProcess(processHandle windows.Handle, processInformationClass int32, processInformation *byte, processInformationLength uint32, returnLength *uint32) (value uintptr, err error) {
+	r1, _, e1 := syscall.SyscallN(
+		procNtQueryInformationProcess.Addr(),
+		uintptr(processHandle),
+		uintptr(processInformationClass),
+		uintptr(unsafe.Pointer(processInformation)),
+		uintptr(processInformationLength),
+		uintptr(unsafe.Pointer(returnLength)),
+	)
+	value = r1
+	if value == 0 {
+		err = errnoErr(e1)
+	}
+	return
+}
+
+/*
+NtDelayExecution
+
+NTSYSAPI
+NTSTATUS
+NTAPI
+NtDelayExecution(
+
+	IN BOOLEAN              Alertable,
+	IN PLARGE_INTEGER       DelayInterval
+	);
+*/
+func NtDelayExecution(DelayInterval int64) (err error) {
+	delay := -(DelayInterval * 1000 * 10000)
+
+	r1, _, e1 := syscall.SyscallN(
+		procNtDelayExecution.Addr(),
+		uintptr(0),
+		uintptr(unsafe.Pointer(&delay)),
+	)
+	if r1 != 0 {
+		err = errnoErr(e1)
+	}
+	return
+}

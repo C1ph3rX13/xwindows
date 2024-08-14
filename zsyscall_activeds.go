@@ -54,29 +54,3 @@ func FreeADsMem(pMem uintptr) (value uintptr, err error) {
 	}
 	return
 }
-
-/*
-I_QueryTagInformation
-
-_Must_inspect_result_
-DWORD
-WINAPI
-I_QueryTagInformation(_In_opt_ LPCWSTR pszMachineName,
-
-	_In_ TAG_INFO_LEVEL 	eInfoLevel,
-	_Inout_ PVOID 			pTagInfo
-	);
-*/
-func I_QueryTagInformation(pszMachineName uintptr, eInfoLevel uintptr, pTagInfo uintptr) (value uintptr, err error) {
-	r1, _, e1 := syscall.SyscallN(
-		procIQueryTagInformation.Addr(),
-		pszMachineName,
-		eInfoLevel,
-		pTagInfo,
-	)
-	value = r1
-	if value == 0 {
-		err = errnoErr(e1)
-	}
-	return
-}
