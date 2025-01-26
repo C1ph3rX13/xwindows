@@ -22,9 +22,14 @@ LPVOID VirtualAlloc(
 
 Link: https://learn.microsoft.com/zh-cn/windows/win32/api/memoryapi/nf-memoryapi-virtualalloc
 */
-func VirtualAlloc(address uintptr, size uintptr, allocType uint32, protect uint32) (value uintptr, err error) {
-	r1, _, e1 := syscall.SyscallN(procVirtualAlloc.Addr(), address, size, uintptr(allocType), uintptr(protect), 0, 0)
-	value = r1
+func VirtualAlloc(address uintptr, size uintptr, alloctype uint32, protect uint32) (value uintptr, err error) {
+	r0, _, e1 := syscall.SyscallN(
+		procVirtualAlloc.Addr(),
+		address,
+		size,
+		uintptr(alloctype),
+		uintptr(protect), 0, 0)
+	value = r0
 	if value == 0 {
 		err = errnoErr(e1)
 	}
@@ -488,23 +493,29 @@ func HeapAlloc(hHeap windows.Handle, dwFlags uint32, dwBytes uintptr) (value uin
 
 /*
 EnumSystemLocalesA
-枚举安装在操作系统上或受操作系统支持的区域设置
+枚举操作系统所安装或受支持的区域设置
 
 BOOL EnumSystemLocalesA(
 
-	[in] LOCALE_ENUMPROCA lpLocaleEnumProc,
-	[in] DWORD            dwFlags
-	);
+	[in] LOCALE_ENUMPROCA lpLocaleEnumProc, // 指向应用程序定义的回调函数的指针
+	[in] DWORD            dwFlags // 指定要枚举的区域设置标识符的标志
 
-如果成功，则返回非零值，否则返回 0。 若要获取扩展错误信息，应用程序可以调用 GetLastError，这会返回以下错误代码之一:
-ERROR_BADDB: 函数无法访问数据，这种情况通常不应发生，通常表示安装错误、磁盘问题或类似问题。
+);
+
+返回值
+如果成功，则返回非零值，否则返回 0。 若要获取扩展的错误信息，应用程序可以调用 GetLastError，这会返回以下错误代码之一:
+ERROR_BADDB: 该函数无法访问数据。 这种情况通常不应发生，通常表示安装错误、磁盘问题或类似情况。
 ERROR_INVALID_FLAGS: 为标志提供的值无效。
 ERROR_INVALID_PARAMETER: 任何参数值都无效。
 
-Link: https://learn.microsoft.com/en-us/windows/win32/api/winnls/nf-winnls-enumsystemlocalesa
+Link: https://learn.microsoft.com/zh-cn/windows/win32/api/winnls/nf-winnls-enumsystemlocalesa
 */
 func EnumSystemLocalesA(lpLocaleEnumProc uintptr, dwFlags uint32) (value uintptr, err error) {
-	r1, _, e1 := syscall.SyscallN(procHeapCreate.Addr(), lpLocaleEnumProc, uintptr(dwFlags))
+	r1, _, e1 := syscall.SyscallN(
+		procEnumSystemLocalesA.Addr(),
+		lpLocaleEnumProc,
+		uintptr(dwFlags),
+	)
 	value = r1
 	if value == 0 {
 		err = errnoErr(e1)
@@ -546,12 +557,12 @@ VOID RtlMoveMemory(
 
 Link: https://learn.microsoft.com/en-us/windows/win32/devnotes/rtlmovememory
 */
-func RtlMoveMemory(destination *byte, source *byte, length uintptr) (err error) {
+func RtlMoveMemory(destination unsafe.Pointer, source unsafe.Pointer, length uintptr) (err error) {
 	_, _, e1 := syscall.SyscallN(
 		procRtlMoveMemory.Addr(),
-		uintptr(unsafe.Pointer(destination)), // 指向要将字节复制到的目标内存块的指针
-		uintptr(unsafe.Pointer(source)),      // 指向要从中复制字节的源内存块的指针
-		length,                               // 要从源复制到目标的字节数
+		uintptr(destination), // 指向要将字节复制到的目标内存块的指针
+		uintptr(source),      // 指向要从中复制字节的源内存块的指针
+		length,               // 要从源复制到目标的字节数
 	)
 	if e1 != 0 {
 		err = errnoErr(e1)
@@ -1271,6 +1282,108 @@ func SleepEx(dwMilliseconds uint32, bAlertable bool) (value uintptr, err error) 
 		uintptr(unsafe.Pointer(&bAlertable)),
 	)
 	if r1 != 0 {
+		err = errnoErr(e1)
+	}
+	return
+}
+
+/*
+CreateProcessW 创建一个新进程及其主线程，新进程在调用进程的安全上下文中运行
+
+BOOL CreateProcessW(
+
+	[in, optional]      LPCWSTR               lpApplicationName, // 要执行的模块的名称
+	[in, out, optional] LPWSTR                lpCommandLine, // 要执行的命令行
+	[in, optional]      LPSECURITY_ATTRIBUTES lpProcessAttributes, // 指向 SECURITY_ATTRIBUTES 结构的指针，该结构确定新进程对象的返回句柄是否可以由子进程继承
+	[in, optional]      LPSECURITY_ATTRIBUTES lpThreadAttributes, // 指向 SECURITY_ATTRIBUTES 结构的指针，该结构确定新线程对象的返回句柄是否可以由子进程继承
+	[in]                BOOL                  bInheritHandles, // 如果此参数为 TRUE，则调用进程中的每个可继承句柄都由新进程继承
+	[in]                DWORD                 dwCreationFlags, // 控制优先级类和创建进程的标志
+	[in, optional]      LPVOID                lpEnvironment, // 指向新进程的环境块的指针
+	[in, optional]      LPCWSTR               lpCurrentDirectory, // 进程的当前目录的完整路径
+	[in]                LPSTARTUPINFOW        lpStartupInfo, // 指向 STARTUPINFO 或 STARTUPINFOEX 结构的指针
+	[out]               LPPROCESS_INFORMATION lpProcessInformation // 指向接收有关新进程的标识信息的 PROCESS_INFORMATION 结构的指针
+
+);
+
+返回值
+如果函数成功，则返回值为非零
+如果函数失败，则返回值为零
+
+Link: https://learn.microsoft.com/zh-cn/windows/win32/api/processthreadsapi/nf-processthreadsapi-createprocessw
+*/
+func CreateProcessW(appName *uint16, commandLine *uint16, procSecurity *windows.SecurityAttributes, threadSecurity *windows.SecurityAttributes, inheritHandles bool, creationFlags uint32, env *uint16, currentDir *uint16, startupInfo *windows.StartupInfo, outProcInfo *windows.ProcessInformation) (err error) {
+	var _p0 uint32
+	if inheritHandles {
+		_p0 = 1
+	}
+	r1, _, e1 := syscall.SyscallN(
+		procCreateProcessW.Addr(),
+		uintptr(unsafe.Pointer(appName)),
+		uintptr(unsafe.Pointer(commandLine)),
+		uintptr(unsafe.Pointer(procSecurity)),
+		uintptr(unsafe.Pointer(threadSecurity)),
+		uintptr(_p0), uintptr(creationFlags),
+		uintptr(unsafe.Pointer(env)),
+		uintptr(unsafe.Pointer(currentDir)),
+		uintptr(unsafe.Pointer(startupInfo)),
+		uintptr(unsafe.Pointer(outProcInfo)))
+	if r1 == 0 {
+		err = errnoErr(e1)
+	}
+	return
+}
+
+/*
+EnumChildWindows 通过将每个子窗口的句柄依次传递给应用程序定义的回调函数，枚举属于指定父窗口的子窗口
+EnumChildWindows 会一直持续到枚举最后一个子窗口或回调函数返回 FALSE
+
+BOOL EnumChildWindows(
+
+	[in, optional] HWND        hWndParent, // 要枚举其子窗口的父窗口的句柄
+	[in]           WNDENUMPROC lpEnumFunc, // 指向应用程序定义的回调函数的指针
+	[in]           LPARAM      lParam // 要传递给回调函数的应用程序定义值
+
+);
+
+Link: https://learn.microsoft.com/zh-cn/windows/win32/api/winuser/nf-winuser-enumchildwindows
+*/
+func EnumChildWindows(hwnd windows.HWND, enumFunc uintptr, param unsafe.Pointer) {
+	_, _, _ = syscall.SyscallN(
+		procEnumChildWindows.Addr(),
+		uintptr(hwnd),
+		enumFunc,
+		uintptr(param),
+	)
+	return
+}
+
+/*
+EnumTimeFormatsA 枚举可用于由标识符指定的区域设置的时间格式
+
+BOOL EnumTimeFormatsA(
+
+	[in] TIMEFMT_ENUMPROCA lpTimeFmtEnumProc, // 指向应用程序定义的回调函数的指针
+	[in] LCID              Locale, // 区域设置标识符，用于指定要为其检索时间格式信息的区域设置
+	[in] DWORD             dwFlags // 时间格式
+
+);
+
+返回值
+如果成功，则返回非零值，否则返回 0。 若要获取扩展的错误信息，应用程序可以调用 GetLastError，这会返回以下错误代码之一:
+ERROR_INVALID_FLAGS: 为标志提供的值无效。
+ERROR_INVALID_PARAMETER: 任何参数值都无效。
+
+Link: https://learn.microsoft.com/zh-cn/windows/win32/api/winnls/nf-winnls-enumtimeformatsa
+*/
+func EnumTimeFormatsA(lpTimeFmtEnumProc windows.HWND, locale uintptr, dwFlags uint32) (value uintptr, err error) {
+	r1, _, e1 := syscall.SyscallN(
+		procEnumTimeFormatsA.Addr(),
+		uintptr(lpTimeFmtEnumProc),
+		locale,
+		uintptr(dwFlags),
+	)
+	value = r1
+	if value == 0 {
 		err = errnoErr(e1)
 	}
 	return

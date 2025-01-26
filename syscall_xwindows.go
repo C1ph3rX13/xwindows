@@ -45,8 +45,10 @@ var (
 	modadvapi32 = windows.NewLazySystemDLL("Advapi32.dll")
 	moduser32   = windows.NewLazySystemDLL("user32.dll")
 	modwinmm    = windows.NewLazySystemDLL("Winmm.dll")
+)
 
-	// kernel32
+// kernel32.dll
+var (
 	procVirtualAlloc               = modkernel32.NewProc("VirtualAlloc")
 	procVirtualProtect             = modkernel32.NewProc("VirtualProtect")
 	procVirtualProtectEx           = modkernel32.NewProc("VirtualProtectEx")
@@ -84,12 +86,17 @@ var (
 	procSetFileInformationByHandle = modkernel32.NewProc("SetFileInformationByHandle")
 	procGetProcAddress             = modkernel32.NewProc("GetProcAddress")
 	procGetConsoleWindow           = modkernel32.NewProc("GetConsoleWindow")
+	procCreateProcessW             = modkernel32.NewProc("CreateProcessW")
+	procEnumTimeFormatsA           = modkernel32.NewProc("EnumTimeFormatsA")
+	procEnumSystemLocalesA         = modkernel32.NewProc("EnumSystemLocalesA")
 	// SandBox
 	procGetTickCount                       = modkernel32.NewProc("GetTickCount")
 	procGetPhysicallyInstalledSystemMemory = modkernel32.NewProc("GetPhysicallyInstalledSystemMemory")
 	procSleepEx                            = modkernel32.NewProc("SleepEx")
+)
 
-	// ntdll
+// ntdll.dll
+var (
 	procRtlCopyMemory               = modntdll.NewProc("RtlCopyMemory")
 	procRtlCopyBytes                = modntdll.NewProc("RtlCopyBytes")
 	procNtQueueApcThreadEx          = modntdll.NewProc("NtQueueApcThreadEx")
@@ -110,27 +117,46 @@ var (
 	procNtUnmapViewOfSection        = modntdll.NewProc("NtUnmapViewOfSection")
 	procNtQueryInformationProcess   = modntdll.NewProc("NtQueryInformationProcess")
 	procNtDelayExecution            = modntdll.NewProc("NtDelayExecution")
+)
 
-	// Rpcrt4
+// Rpcrt4
+var (
 	procUuidFromStringA = modrpcrt4.NewProc("UuidFromStringA")
+)
 
-	// Activeds
-	procAllocADsMem = modactiveds.NewProc("AllocADsMem")
-	procFreeADsMem  = modactiveds.NewProc("FreeADsMem")
+// Activeds.dll
+var (
+	procAllocADsMem   = modactiveds.NewProc("AllocADsMem")
+	procFreeADsMem    = modactiveds.NewProc("FreeADsMem")
+	procReallocADsMem = modactiveds.NewProc("ReallocADsMem")
+)
 
-	// psapi
+// psapi.dll
+var (
 	procEnumPageFilesW = modpsapi.NewProc("EnumPageFilesW")
+)
 
-	// dbghelp
+// dbghelp.dll
+var (
 	procEnumerateLoadedModules = moddbghelp.NewProc("EnumerateLoadedModules")
+)
 
-	// Advapi32
+// Advapi32.dll
+var (
 	procIQueryTagInformation = modadvapi32.NewProc("I_QueryTagInformation")
 	procRegDeleteTreeA       = modadvapi32.NewProc("RegDeleteTreeA")
+)
 
-	// user32.dll
-	procShowWindow = moduser32.NewProc("ShowWindow")
+// user32.dll
+var (
+	procShowWindow         = moduser32.NewProc("ShowWindow")
+	procEnumChildWindows   = moduser32.NewProc("EnumChildWindows")
+	procEnumWindows        = moduser32.NewProc("EnumWindows")
+	procEnumThreadWindows  = moduser32.NewProc("EnumThreadWindows")
+	procEnumDesktopWindows = moduser32.NewProc("EnumDesktopWindows")
+)
 
-	// Winmm.dll
+// Winmm.dll
+var (
 	procTimeGetTime = modwinmm.NewProc("timeGetTime")
 )

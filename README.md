@@ -14,6 +14,14 @@ This package makes selected `DLLs` functions directly available in Go programs. 
 
 ## What’s Changed
 
+### 2025.1.26
+
+1. 修复调用错误，新增多个函数
+2. 新增统一错误类型
+3. 规范文件名，符合`xwindows`风格
+4. 完善文档支持内容
+5. 暂不支持`syscall.SyscallN()`作为`syscall`的原生调用的函数，提供以`Z`为后缀且使用`Call()`调用的方法
+
 ### 2024.8.14
 
 1. 新增`mkwinsyscall`工具实现API代码生成 - 待完善

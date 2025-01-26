@@ -21,12 +21,12 @@ void RtlCopyMemory(
 
 Link: https://learn.microsoft.com/zh-cn/windows-hardware/drivers/ddi/wdm/nf-wdm-rtlcopymemory
 */
-func RtlCopyMemory(address *byte, source *byte, length uintptr) (err error) {
+func RtlCopyMemory(address unsafe.Pointer, source unsafe.Pointer, length uintptr) (err error) {
 	_, _, e1 := syscall.SyscallN(
 		procRtlCopyMemory.Addr(),
-		uintptr(unsafe.Pointer(address)), // 指向要将字节复制到的目标内存块的指针
-		uintptr(unsafe.Pointer(source)),  // 指向要从中复制字节的源内存块的指针
-		length,                           // 要从源复制到目标的字节数
+		uintptr(address), // 指向要将字节复制到的目标内存块的指针
+		uintptr(source),  // 指向要从中复制字节的源内存块的指针
+		length,           // 要从源复制到目标的字节数
 	)
 	if e1 != 0 {
 		err = errnoErr(e1)
@@ -183,10 +183,10 @@ RtlIpv4StringToAddressA
 
 NTSYSAPI NTSTATUS RtlIpv4StringToAddressA(
 
-	[in]  PCSTR   S,
-	[in]  BOOLEAN Strict,
-	[out] PCSTR   *Terminator,
-	[out] in_addr *Addr
+	[in]  PCSTR   S, // 指向包含 IPv4 地址的 NULL终止字符串表示形式的缓冲区的指针
+	[in]  BOOLEAN Strict, // 一个值，该值指示字符串是否必须是以严格四部分点十进制表示法表示的 IPv4 地址
+	[out] PCSTR   *Terminator, // 一个参数，该参数接收指向终止转换字符串的字符的指针
+	[out] in_addr *Addr // 一个指针，其中存储 IPv4 地址的二进制表示形式
 	);
 
 如果函数成功，则返回值 STATUS_SUCCESS。
@@ -273,18 +273,19 @@ func NtAllocateVirtualMemory(processHandle windows.Handle, baseAddress *byte, ze
 /*
 NtWriteVirtualMemory is similar to WINAPI WriteProcessMemory.
 
-NTSYSAPI
+NTSYSCALLAPI
 NTSTATUS
 NTAPI
 NtWriteVirtualMemory(
 
-	IN HANDLE               ProcessHandle,
-	IN PVOID                BaseAddress,
-	IN PVOID                Buffer,
-	IN ULONG                NumberOfBytesToWrite,
-	OUT PULONG              NumberOfBytesWritten OPTIONAL
+	_In_ HANDLE ProcessHandle,
+	_In_opt_ PVOID BaseAddress,
+	_In_reads_bytes_(NumberOfBytesToWrite) PVOID Buffer,
+	_In_ SIZE_T NumberOfBytesToWrite,
+	_Out_opt_ PSIZE_T NumberOfBytesWritten
 	);
 
+Link: https://ntdoc.m417z.com/ntwritevirtualmemory
 Link: https://undocumented-ntinternals.github.io/index.html?page=UserMode%2FUndocumented%20Functions%2FMemory%20Management%2FVirtual%20Memory%2FNtWriteVirtualMemory.html
 */
 func NtWriteVirtualMemory(processHandle windows.Handle, baseAddress *byte, buffer *byte, BufferSize uintptr, numberOfBytesWritten *uintptr) (value uintptr, err error) {
@@ -554,12 +555,13 @@ NtQueryInformationProcess
 
 __kernel_entry NTSTATUS NtQueryInformationProcess(
 
-	  [in]            HANDLE           ProcessHandle,             // 要检索信息的进程句柄
-	  [in]            PROCESSINFOCLASS ProcessInformationClass,   // 要检索的进程信息的类型
-	  [out]           PVOID            ProcessInformation,        // 指向由调用应用程序提供的缓冲区的指针，函数将请求的信息写入其中
-	  [in]            ULONG            ProcessInformationLength,
-	  [out, optional] PULONG           ReturnLength
-	);
+	[in]            HANDLE           ProcessHandle,
+	[in]            PROCESSINFOCLASS ProcessInformationClass,
+	[out]           PVOID            ProcessInformation,
+	[in]            ULONG            ProcessInformationLength,
+	[out, optional] PULONG           ReturnLength
+
+);
 
 返回值
 函数返回 NTSTATUS 成功或错误代码。
@@ -567,18 +569,46 @@ NTSTATUS 错误代码的形式和意义列在 DDK 中提供的 Ntstatus.h 头文
 
 Link: https://learn.microsoft.com/zh-cn/windows/win32/api/winternl/nf-winternl-ntqueryinformationprocess
 */
-func NtQueryInformationProcess(processHandle windows.Handle, processInformationClass int32, processInformation *byte, processInformationLength uint32, returnLength *uint32) (value uintptr, err error) {
+func NtQueryInformationProcess(
+	processHandle windows.Handle,
+	processInformationClass uint32,
+	processInformation unsafe.Pointer,
+	processInformationLength uint32,
+	returnLength *uint32,
+) (value uintptr, err error) {
 	r1, _, e1 := syscall.SyscallN(
 		procNtQueryInformationProcess.Addr(),
 		uintptr(processHandle),
 		uintptr(processInformationClass),
-		uintptr(unsafe.Pointer(processInformation)),
+		uintptr(processInformation),
 		uintptr(processInformationLength),
 		uintptr(unsafe.Pointer(returnLength)),
 	)
 	value = r1
-	if value == 0 {
+	if value != 0 {
 		err = errnoErr(e1)
+	}
+	return
+}
+
+// NtQueryInformationProcessZ 暂代 NtQueryInformationProcess(调用参数错误) 的使用
+func NtQueryInformationProcessZ(
+	processHandle windows.Handle,
+	processInformationClass uintptr,
+	processInformation uintptr,
+	processInformationLength uintptr,
+	returnLength uintptr,
+) (value uintptr, err error) {
+	r1, _, e1 := procNtQueryInformationProcess.Call(
+		uintptr(processHandle),
+		processInformationClass,
+		processInformation,
+		processInformationLength,
+		returnLength,
+	)
+	value = r1
+	if value != 0 {
+		err = e1
 	}
 	return
 }

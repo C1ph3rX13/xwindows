@@ -10,6 +10,28 @@ const (
 	PROCESS_ALL_ACCESS = windows.STANDARD_RIGHTS_REQUIRED | windows.SYNCHRONIZE | 0xFFF
 )
 
+type (
+	BOOLEAN          byte
+	BOOL             int32
+	DWORD            uint32
+	DWORD32          uint32
+	DWORD64          uint32
+	WORD             uint16
+	HANDLE           uintptr
+	PVOID            uintptr
+	PBOOL            uintptr
+	LPVOID           uintptr
+	SIZE_T           uintptr
+	LPCVOID          uintptr
+	LPCSTR           uintptr
+	LPDWORD          uintptr
+	ProcessInfoClass uint32
+	ULONG            uintptr
+	PULONG           uintptr
+	NTSTATUS         int32
+	HMODULE          uintptr
+)
+
 type ThreadEntry32 struct {
 	Size           uint32
 	Usage          uint32
@@ -55,8 +77,6 @@ type OBJECT_ATTRIBUTES struct {
 	SecurityDescriptor       uintptr
 	SecurityQualityOfService uintptr
 }
-
-type NTSTATUS uintptr
 
 // XMM_SAVE_AREA32 https://docs.microsoft.com/en-us/windows/win32/api/winnt/ns-winnt-context
 type XMM_SAVE_AREA32 struct {
