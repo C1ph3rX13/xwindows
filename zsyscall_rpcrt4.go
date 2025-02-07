@@ -21,14 +21,14 @@ RPC_S_INVALID_STRING_UUID: 字符串 UUID 无效。
 
 Link: https://learn.microsoft.com/zh-cn/windows/win32/api/rpcdce/nf-rpcdce-uuidfromstringa
 */
-func UuidFromStringA(stringUuid *byte, uuid uintptr) (value uintptr, err error) {
+func UuidFromStringA(stringUuid *byte, uuid uintptr) (RpcSOk uint32, err error) {
 	r0, _, e1 := syscall.SyscallN(
 		procUuidFromStringA.Addr(),
 		uintptr(unsafe.Pointer(stringUuid)), // 指向 UUID 的字符串表示形式的指针
 		uuid,                                // 返回指向二进制形式的 UUID 的指针
 	)
-	value = r0
-	if value == 0 {
+	RpcSOk = uint32(r0)
+	if RpcSOk != 0 {
 		err = errnoErr(e1)
 	}
 	return

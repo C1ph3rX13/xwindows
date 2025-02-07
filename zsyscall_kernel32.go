@@ -1388,3 +1388,81 @@ func EnumTimeFormatsA(lpTimeFmtEnumProc windows.HWND, locale uintptr, dwFlags ui
 	}
 	return
 }
+
+/*
+CreatePipe
+创建匿名管道，并将句柄返回到管道的读取和写入端
+
+BOOL CreatePipe(
+
+	[out]          PHANDLE               hReadPipe,         // 指向接收管道读取句柄的变量的指针
+	[out]          PHANDLE               hWritePipe,        // 指向接收管道写入句柄的变量的指针
+	[in, optional] LPSECURITY_ATTRIBUTES lpPipeAttributes,  // 指向 SECURITY_ATTRIBUTES 结构的指针
+	[in]           DWORD                 nSize              // 管道的缓冲区大小（以字节为单位）
+
+);
+
+返回值
+如果函数成功，则返回值为非零
+如果函数失败，则返回值为零
+
+Link: https://learn.microsoft.com/zh-cn/windows/win32/api/namedpipeapi/nf-namedpipeapi-createpipe
+*/
+func CreatePipe(readHandle *windows.Handle, writeHandle *windows.Handle, sa *windows.SecurityAttributes, size uint32) (err error) {
+	r1, _, e1 := syscall.SyscallN(
+		procCreatePipe.Addr(),
+		uintptr(unsafe.Pointer(readHandle)),
+		uintptr(unsafe.Pointer(writeHandle)),
+		uintptr(unsafe.Pointer(sa)),
+		uintptr(size),
+	)
+	if r1 == 0 {
+		err = errnoErr(e1)
+	}
+	return
+}
+
+/*
+VirtualAllocExNuma
+保留、提交或更改指定进程的虚拟地址空间中的内存区域的状态，并为物理内存指定 NUMA 节点
+
+LPVOID VirtualAllocExNuma(
+
+	[in]           HANDLE hProcess,         // 进程的句柄
+	[in, optional] LPVOID lpAddress,        // 为要分配的页面区域指定所需起始地址的指针
+	[in]           SIZE_T dwSize,           // 要分配的内存区域的大小（以字节为单位）
+	[in]           DWORD  flAllocationType, // 内存分配的类型
+	[in]           DWORD  flProtect,        // 要分配的页区域的内存保护
+	[in]           DWORD  nndPreferred      // 物理内存应驻留的 NUMA 节点
+
+);
+
+返回值
+如果函数成功，则返回值是已分配页区域的基址
+如果函数失败，则返回值为 NULL。
+
+Link: https://learn.microsoft.com/zh-cn/windows/win32/api/memoryapi/nf-memoryapi-virtualallocexnuma
+*/
+func VirtualAllocExNuma(
+	hProcess windows.Handle,
+	lpAddress uintptr,
+	dwSize uintptr,
+	flAllocationType uint32,
+	flProtect uint32,
+	nndPreferred uint32,
+) (value uintptr, err error) {
+	r0, _, e1 := syscall.SyscallN(
+		procVirtualAllocExNuma.Addr(),
+		uintptr(hProcess),
+		lpAddress,
+		dwSize,
+		uintptr(flAllocationType),
+		uintptr(flProtect),
+		uintptr(nndPreferred),
+	)
+	value = r0
+	if value == 0 {
+		err = errnoErr(e1)
+	}
+	return
+}

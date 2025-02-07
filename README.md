@@ -14,6 +14,34 @@ This package makes selected `DLLs` functions directly available in Go programs. 
 
 ## What’s Changed
 
+### 2025.2.7
+
+1. 新增多个函数，Bugs 修复
+
+2. 尝试使用 `CGO` 调用部分 API （实验性）
+
+   ```go
+   // filename: cgo_user32.go
+   package xwindows
+   
+   /*
+      #cgo LDFLAGS: -lwinmm
+      #include <windows.h>
+      #include <mmsystem.h>
+   
+      DWORD TimeGetTimeCGO() {
+          return timeGetTime();
+      }
+   */
+   import "C"
+   
+   func TimeGetTimeC() uint32 {
+   	return uint32(C.TimeGetTimeCGO())
+   }
+   ```
+
+3. 新增`type_xwindows.go`：`xwindows`风格的预定义变量
+
 ### 2025.1.26
 
 1. 修复调用错误，新增多个函数

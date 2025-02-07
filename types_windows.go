@@ -78,7 +78,8 @@ type OBJECT_ATTRIBUTES struct {
 	SecurityQualityOfService uintptr
 }
 
-// XMM_SAVE_AREA32 https://docs.microsoft.com/en-us/windows/win32/api/winnt/ns-winnt-context
+// XMM_SAVE_AREA32
+// https://docs.microsoft.com/en-us/windows/win32/api/winnt/ns-winnt-context
 type XMM_SAVE_AREA32 struct {
 	ControlWord    uint16
 	StatusWord     uint16
@@ -98,13 +99,15 @@ type XMM_SAVE_AREA32 struct {
 	Reserved4      [96]byte
 }
 
-// M128A https://docs.microsoft.com/en-us/windows/win32/api/winnt/ns-winnt-context
+// M128A
+// https://docs.microsoft.com/en-us/windows/win32/api/winnt/ns-winnt-context
 type M128A struct {
 	Low  uint64
 	High int64
 }
 
-// CONTEXT https://docs.microsoft.com/en-us/windows/win32/api/winnt/ns-winnt-context
+// CONTEXT
+// https://docs.microsoft.com/en-us/windows/win32/api/winnt/ns-winnt-context
 type CONTEXT struct {
 	P1Home uint64
 	P2Home uint64
@@ -162,43 +165,47 @@ type CONTEXT struct {
 	LastExceptionFromRip uint64
 }
 
+/*
 type IMAGE_DOS_HEADER struct { // DOS .EXE header
-	/*E_magic    uint16     // Magic number
-	  E_cblp     uint16     // Bytes on last page of file
-	  E_cp       uint16     // Pages in file
-	  E_crlc     uint16     // Relocations
-	  E_cparhdr  uint16     // Size of header in paragraphs
-	  E_minalloc uint16     // Minimum extra paragraphs needed
-	  E_maxalloc uint16     // Maximum extra paragraphs needed
-	  E_ss       uint16     // Initial (relative) SS value
-	  E_sp       uint16     // Initial SP value
-	  E_csum     uint16     // Checksum
-	  E_ip       uint16     // Initial IP value
-	  E_cs       uint16     // Initial (relative) CS value
-	  E_lfarlc   uint16     // File address of relocation table
-	  E_ovno     uint16     // Overlay number
-	  E_res      [4]uint16  // Reserved words
-	  E_oemid    uint16     // OEM identifier (for E_oeminfo)
-	  E_oeminfo  uint16     // OEM information; E_oemid specific
-	  E_res2     [10]uint16 // Reserved words*/
-	E_lfanew uint32 // File address of new exe header
-}
 
+		E_magic    uint16     // Magic number
+		E_cblp     uint16     // Bytes on last page of file
+		E_cp       uint16     // Pages in file
+		E_crlc     uint16     // Relocations
+		E_cparhdr  uint16     // Size of header in paragraphs
+		E_minalloc uint16     // Minimum extra paragraphs needed
+		E_maxalloc uint16     // Maximum extra paragraphs needed
+		E_ss       uint16     // Initial (relative) SS value
+		E_sp       uint16     // Initial SP value
+		E_csum     uint16     // Checksum
+		E_ip       uint16     // Initial IP value
+		E_cs       uint16     // Initial (relative) CS value
+		E_lfarlc   uint16     // File address of relocation table
+		E_ovno     uint16     // Overlay number
+		E_res      [4]uint16  // Reserved words
+		E_oemid    uint16     // OEM identifier (for E_oeminfo)
+		E_oeminfo  uint16     // OEM information; E_oemid specific
+		E_res2     [10]uint16 // Reserved words
+		E_lfanew   uint32     // File address of new exe header
+	}
+*/
 type IMAGE_NT_HEADER struct {
 	Signature      uint32
 	FileHeader     IMAGE_FILE_HEADER
 	OptionalHeader IMAGE_OPTIONAL_HEADER
 }
 
-type IMAGE_FILE_HEADER struct {
-	Machine              uint16
-	NumberOfSections     uint16
-	TimeDateStamp        uint32
-	PointerToSymbolTable uint32
-	NumberOfSymbols      uint32
-	SizeOfOptionalHeader uint16
-	Characteristics      uint16
-}
+/*
+	type IMAGE_FILE_HEADER struct {
+		Machine              uint16
+		NumberOfSections     uint16
+		TimeDateStamp        uint32
+		PointerToSymbolTable uint32
+		NumberOfSymbols      uint32
+		SizeOfOptionalHeader uint16
+		Characteristics      uint16
+	}
+*/
 
 type IMAGE_OPTIONAL_HEADER struct {
 	Magic                       uint16
@@ -233,7 +240,9 @@ type IMAGE_OPTIONAL_HEADER struct {
 	DataDirectory               [16]IMAGE_DATA_DIRECTORY
 }
 
+/*
 type IMAGE_DATA_DIRECTORY struct {
 	VirtualAddress uint32
 	Size           uint32
 }
+*/

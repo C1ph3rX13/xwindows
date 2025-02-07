@@ -1,6 +1,7 @@
 package xwindows
 
 import (
+	"errors"
 	"syscall"
 	"unsafe"
 
@@ -177,32 +178,64 @@ func RtlEthernetAddressToStringA(addr *byte, s uintptr) (value uintptr, err erro
 	return
 }
 
+// RtlIpv4StringToAddressA
 /*
 RtlIpv4StringToAddressA
 将 IPv4 地址的字符串表示形式转换为二进制 IPv4 地址
 
 NTSYSAPI NTSTATUS RtlIpv4StringToAddressA(
 
-	[in]  PCSTR   S, // 指向包含 IPv4 地址的 NULL终止字符串表示形式的缓冲区的指针
-	[in]  BOOLEAN Strict, // 一个值，该值指示字符串是否必须是以严格四部分点十进制表示法表示的 IPv4 地址
+	[in]  PCSTR   S,           // 指向包含 IPv4 地址的 NULL终止字符串表示形式的缓冲区的指针
+	[in]  BOOLEAN Strict,      // 一个值，该值指示字符串是否必须是以严格四部分点十进制表示法表示的 IPv4 地址
 	[out] PCSTR   *Terminator, // 一个参数，该参数接收指向终止转换字符串的字符的指针
-	[out] in_addr *Addr // 一个指针，其中存储 IPv4 地址的二进制表示形式
+	[out] in_addr *Addr        // 一个指针，其中存储 IPv4 地址的二进制表示形式
 	);
 
 如果函数成功，则返回值 STATUS_SUCCESS。
 
 Link: https://learn.microsoft.com/zh-cn/windows/win32/api/ip2string/nf-ip2string-rtlipv4stringtoaddressa
 */
-func RtlIpv4StringToAddressA(s uintptr, strict uintptr, terminator *byte, addr *byte) (value uintptr, err error) {
+func RtlIpv4StringToAddressA(s uintptr, strict uintptr, terminator uintptr, addr uintptr) (NTStatus windows.NTStatus, err error) {
 	r1, _, e1 := syscall.SyscallN(
 		procRtlIpv4StringToAddressA.Addr(),
 		s,
 		strict,
-		uintptr(unsafe.Pointer(terminator)),
-		uintptr(unsafe.Pointer(addr)),
+		terminator,
+		addr,
 	)
-	value = r1
-	if value == 0 {
+	NTStatus = windows.NTStatus(r1)
+	if !errors.Is(NTStatus, windows.STATUS_SUCCESS) {
+		err = errnoErr(e1)
+	}
+	return
+}
+
+/*
+RtlIpv4StringToAddressExA
+将 IPv4 地址和端口号的字符串表示形式转换为二进制 IPv4 地址和端口
+
+NTSYSAPI NTSTATUS RtlIpv4StringToAddressExA(
+[in]  PCSTR   AddressString,
+[in]  BOOLEAN Strict,
+[out] in_addr *Address,
+[out] PUSHORT Port
+);
+
+如果函数成功，则返回值 STATUS_SUCCESS
+如果函数失败，则返回值为 STATUS_INVALID_PARAMETER
+
+Link: https://learn.microsoft.com/zh-cn/windows/win32/api/ip2string/nf-ip2string-rtlipv4stringtoaddressexa
+*/
+func RtlIpv4StringToAddressExA(s uintptr, strict uintptr, addr uintptr, port uintptr) (NTStatus windows.NTStatus, err error) {
+	r1, _, e1 := syscall.SyscallN(
+		procRtlIpv4StringToAddressExA.Addr(),
+		s,
+		strict,
+		addr,
+		port,
+	)
+	NTStatus = windows.NTStatus(r1)
+	if !errors.Is(NTStatus, windows.STATUS_SUCCESS) {
 		err = errnoErr(e1)
 	}
 	return
@@ -573,6 +606,29 @@ func NtQueryInformationProcess(
 	processHandle windows.Handle,
 	processInformationClass uint32,
 	processInformation unsafe.Pointer,
+	processInformationLength uintptr,
+	returnLength *uintptr,
+) (NTSTATUS uintptr, err error) {
+	r1, _, e1 := syscall.SyscallN(
+		procNtQueryInformationProcess.Addr(),
+		uintptr(processHandle),
+		uintptr(processInformationClass),
+		uintptr(processInformation),
+		processInformationLength,              // 缓冲区大小 (字节)
+		uintptr(unsafe.Pointer(returnLength)), // 可选的返回长度
+	)
+	NTSTATUS = r1
+	if NTSTATUS != 0 {
+		err = errnoErr(e1)
+	}
+	return
+}
+
+/*
+func NtQueryInformationProcess(
+	processHandle windows.Handle,
+	processInformationClass uint32,
+	processInformation unsafe.Pointer,
 	processInformationLength uint32,
 	returnLength *uint32,
 ) (value uintptr, err error) {
@@ -590,6 +646,7 @@ func NtQueryInformationProcess(
 	}
 	return
 }
+*/
 
 // NtQueryInformationProcessZ 暂代 NtQueryInformationProcess(调用参数错误) 的使用
 func NtQueryInformationProcessZ(
