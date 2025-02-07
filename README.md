@@ -21,7 +21,7 @@ This package makes selected `DLLs` functions directly available in Go programs. 
 2. 尝试使用 `CGO` 调用部分 API （实验性）
 
    ```go
-   // filename: cgo_user32.go
+   // filename: cgo_winmm.go
    package xwindows
    
    /*
